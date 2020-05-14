@@ -1,6 +1,3 @@
-# En nod består av ett set av massa 'bits' och vilken rond den är i.
-# så nod = [set(bits), rond]
-
 def traverse(starting_node, n, max_round):
     visited = set()
     visited.add((tuple(starting_node[0]), starting_node[1]))
