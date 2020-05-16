@@ -1,9 +1,43 @@
 
 use std::collections::HashSet;
 use std::collections::HashMap;
+use std::collections::VecDeque;
 
 const N: usize = 6;
 const PHI: usize = 5;
+
+fn bread(starting_node: (Vec<u8>, u8), classes: &Vec<usize>) -> bool {
+    let mut visited: HashMap<(u64, u8), Option<((u64, u8), u8)>> = HashMap::new();
+    let nnn = to_number(&starting_node.0);
+    visited.insert((nnn, starting_node.1), None);
+    let mut queue = VecDeque::new();
+    let neigh = neighbours(&starting_node, &mut visited, &classes);
+    let mut i = 0;
+    queue.extend(neigh.into_iter());
+    let mut next_layer = queue.len();
+    let mut layer = 1;
+    loop {
+        let next = match queue.pop_front() {
+            Some(k) => k,
+            None    => return false,
+        };
+        if i == next_layer {
+            eprintln!("Finished with layer {}", layer);
+            next_layer = queue.len();
+            layer += 1;
+            i = 0;
+        } else {
+            i += 1;
+        }
+
+        if next.0.len() == 0 {
+            find_history(visited, next.clone());
+            return true;
+        }
+        let new_neigh = neighbours(&next, &mut visited, &classes);
+        queue.extend(new_neigh.into_iter());
+    }
+}
 
 fn traverse(starting_node: (Vec<u8>, u8), classes: &Vec<usize>) -> bool {
     let mut visited: HashMap<(u64, u8), Option<((u64, u8), u8)>> = HashMap::new();
@@ -38,9 +72,8 @@ fn traverse(starting_node: (Vec<u8>, u8), classes: &Vec<usize>) -> bool {
 
 fn find_history(visited: HashMap<(u64, u8), Option<((u64, u8), u8)>>, end_node: (Vec<u8>, u8)) {
     let conv = to_number(&end_node.0);
-    let mut conv_tup = (conv, end_node.1);
+    let conv_tup = (conv, end_node.1);
     let (mut node, mut mov) = visited.get(&conv_tup).unwrap().unwrap();
-    println!("SO YOU WANT TO ESCAPE FROM YOUR LAIR? WELL JUST FOLLOW THESE INSTRUCTIONS");
     let mut out = Vec::new();
     out.push(mov);
 
@@ -56,8 +89,14 @@ fn find_history(visited: HashMap<(u64, u8), Option<((u64, u8), u8)>>, end_node: 
         out.push(mov)
     }
     out.reverse();
+
+    println!("SO YOU WANT TO ESCAPE FROM YOUR LAIR WHERE THERE ARE {} CARDS ON THE TABLE AND YOU CAN MAKE {} MOVES BEFORE THE SUPERVISOR TURNS THE TABLE? WELL JUST FOLLOW THESE {} INSTRUCTIONS", N, PHI, out.len());
     for o in out {
-        println!("{:06b}", o);
+        assert!(N <= 20);
+        let mut s = format!("{:020b}", o);
+        let number = s.split_off(20 - N);
+        println!("{}", number);
+
     }
 }
 
@@ -222,6 +261,6 @@ fn start(n: usize) -> Vec<u8> {
 }
 fn main() {
     dbg!(N, PHI);
-    let a = traverse((start(N), 0), &eq_classes());
+    let a = bread((start(N), 0), &eq_classes());
     dbg!(a);
 }
